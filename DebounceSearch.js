@@ -48,3 +48,61 @@ function SearchComponent() {
 }
 
 export default SearchComponent;
+
+
+// Interview Usecase
+
+function App() {
+  const [data, setData] = React.useState([]);
+
+  // Debounce function
+  const debounce = (mainFunction, delay) => {
+    let timer;
+    return function (...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        mainFunction(...args);
+      }, delay);
+    };
+  };
+
+  // API call to search for data
+  const searchFromAPI = async (searchKey) => {
+    try {
+      const response = await axios.get(
+        `https://openlibrary.org/search.json?q=${searchKey}`
+      );
+      console.log(response.data);
+      let resp = response.data.docs;
+      const titles = resp.map((item) => item.title).filter(Boolean);
+      setData(titles);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  // Create a debounced version of the search function
+  const debouncedSearch = React.useCallback(debounce(searchFromAPI, 1000), []);
+
+  // Handle input change
+  const onChange = (e) => {
+    console.log(e.target.value);
+    debouncedSearch(e.target.value);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      console.log("Component unmounted, cleanup here if needed");
+    };
+  }, []);
+
+  return (
+    <div className="App">
+      <h1>Hello CodeSandbox</h1>
+      <input type="text" onChange={onChange} />
+      {data.map((item, index) => (
+        <p key={index}>{item}</p>
+      ))}
+    </div>
+  );
+}
